@@ -11,20 +11,17 @@ import (
 func main() {
 	now := time.Now().Format(time.StampMilli)
 	fmt.Println(now, "main program started...")
+
 	bus := &infra.Bus{}
-
-	cmd1 := app.Cmd1{}
-	cmd2 := app.Cmd2{}
-
-	err := bus.Handle(cmd1)
-	if err != nil {
-		fmt.Printf("error from cmd1: %s\n", err)
+	cmds := []interface{}{
+		app.Cmd1{},
+		app.Cmd2{},
+		app.Cmd1{},
+		app.Cmd2{},
 	}
 
-	err = bus.Handle(cmd2)
-	if err != nil {
-		fmt.Printf("error from cmd2: %s\n", err)
-	}
+	cbus := infra.NewConcurrentBus(bus, cmds)
+	cbus.Handle()
 
 	fmt.Println()
 	fmt.Println("reset of the application...")
