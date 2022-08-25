@@ -24,9 +24,8 @@ func main() {
 
 	cbus := infra.NewConcurrentBus(bus, cmds)
 	cbus.Handle()
-	for i := 1; i <= maxRetries; i++ {
-		cbus.Retry(time.Duration(i) * time.Second)
-	}
+	strategy := infra.LinearBackoffStrategy()
+	cbus.RetryWithStrategy(strategy, maxRetries)
 
 	fmt.Println()
 	fmt.Println("reset of the application...")
