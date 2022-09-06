@@ -9,7 +9,7 @@ import (
 var counter int
 
 func init() {
-	counter = 3
+	counter = 2
 }
 
 type Cmd1 struct {
@@ -21,11 +21,8 @@ type Hndlr1 struct {
 }
 
 func (h *Hndlr1) Handle(cmd Cmd1, domainBus chan<- interface{}) error {
-	counter--
 	now := time.Now().Format(time.StampMilli)
 	fmt.Println(now, "Use-Case 1, handling command normally...")
-
-	fmt.Println("counter is ", counter)
 
 	if counter > 0 {
 		mutatedAgg1, err := domain.MutateAggregate1("foo", 5, domainBus)
@@ -35,9 +32,11 @@ func (h *Hndlr1) Handle(cmd Cmd1, domainBus chan<- interface{}) error {
 
 		// do something with the aggregate
 		// memic the handling period using sleep
-		fmt.Println(mutatedAgg1)
+		fmt.Printf("domain event emittid from aggregate %v, while counter is %d", mutatedAgg1, counter)
+		fmt.Println()
 	}
 
+	counter--
 	time.Sleep(time.Second)
 
 	return nil

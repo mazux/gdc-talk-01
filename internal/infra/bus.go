@@ -37,11 +37,19 @@ func (b *bus) Handle(cmd interface{}) error {
 
 	for {
 		select {
+		// any write to the errChan indicates the handler finished its job
+		// and now we can proceed
 		case err := <-b.errChan:
+			// in case of an error during the handling, just return it and stop
 			if err != nil {
 				return err
 			}
+			// no error while handling the command, we can proceed handling the
+			// domain events
 			return b.handleDomainEvents()
+
+		// store domain events after transforming them into commands
+		// to handle them concurrently later after the handler is finshed (errChan has something)
 		case domainEvent := <-b.domainBus:
 			b.registerEventAsCommand(domainEvent)
 		}
@@ -50,29 +58,35 @@ func (b *bus) Handle(cmd interface{}) error {
 
 func (b *bus) handleDomainEvents() error {
 	var wg sync.WaitGroup
-	wg.Add(len(b.eventCmds))
+
 	for _, cmd := range b.eventCmds {
+		wg.Add(1)
+
 		go func(c interface{}) {
 			defer wg.Done()
-			b.Handle(c)
+
+			cb := NewBus()
+			cb.Handle(c)
 		}(cmd)
 	}
+
 	wg.Wait()
+
 	return nil
 }
 
 func (b *bus) registerEventAsCommand(domainEvent interface{}) {
-	eventType := getType(domainEvent)
+	eventType := b.getType(domainEvent)
 	fmt.Println("registering event with type ", eventType)
 
+	// b.eventCmds = append(b.eventCmds, app.Cmd2{})
+	// b.eventCmds = append(b.eventCmds, app.Cmd2{})
 	b.eventCmds = append(b.eventCmds, app.Cmd2{})
-	b.eventCmds = append(b.eventCmds, app.Cmd2{})
-	b.eventCmds = append(b.eventCmds, app.Cmd2{})
-	// b.eventCmds = append(b.eventCmds, app.Cmd1{})
+	b.eventCmds = append(b.eventCmds, app.Cmd1{})
 }
 
 func (b *bus) handle(cmd interface{}) {
-	cmdType := getType(cmd)
+	cmdType := b.getType(cmd)
 	switch cmdType {
 	case "Cmd1":
 		b.errChan <- b.hndlr1.Handle(cmd.(app.Cmd1), b.domainBus)
@@ -85,7 +99,7 @@ func (b *bus) handle(cmd interface{}) {
 	b.errChan <- fmt.Errorf("unable to find handler for cmd %s", cmdType)
 }
 
-func getType(v interface{}) string {
+func (b *bus) getType(v interface{}) string {
 	if t := reflect.TypeOf(v); t.Kind() == reflect.Ptr {
 		return t.Elem().Name()
 	} else {
