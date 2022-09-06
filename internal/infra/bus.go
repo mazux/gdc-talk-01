@@ -76,6 +76,10 @@ func (b *bus) handleDomainEvents() error {
 }
 
 func (b *bus) registerEventAsCommand(domainEvent interface{}) {
+	// each domain event can become one or more commands
+	// we register them in memory to invoke them later
+	// whenever the main DB transaction finished successfully
+	
 	eventType := b.getType(domainEvent)
 	fmt.Println("registering event with type ", eventType)
 
