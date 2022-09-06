@@ -11,19 +11,13 @@ import (
 func main() {
 	now := time.Now().Format(time.StampMilli)
 	fmt.Println(now, "main program started...")
-	bus := &infra.Bus{}
+	bus := infra.NewBus()
 
 	cmd1 := app.Cmd1{}
-	cmd2 := app.Cmd2{}
 
 	err := bus.Handle(cmd1)
 	if err != nil {
 		fmt.Printf("error from cmd1: %s\n", err)
-	}
-
-	err = bus.Handle(cmd2)
-	if err != nil {
-		fmt.Printf("error from cmd2: %s\n", err)
 	}
 
 	fmt.Println()
